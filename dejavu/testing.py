@@ -5,7 +5,9 @@ from dejavu import Dejavu
 from dejavu.fingerprint import *
 import traceback
 import fnmatch
-import os, re, ast
+import os
+import re
+import ast
 import subprocess
 import random
 import logging
@@ -17,7 +19,7 @@ def set_seed(seed=None):
     Setting your own seed means that you can produce the 
     same experiment over and over. 
     """
-    if seed != None:
+    if seed is not None:
         random.seed(seed)
 
 def get_files_recursive(src, fmt):
