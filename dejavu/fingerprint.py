@@ -142,14 +142,12 @@ def generate_hashes(peaks, fan_value=DEFAULT_FAN_VALUE):
     for i in range(len(peaks)):
         for j in range(1, fan_value):
             if (i + j) < len(peaks):
-                
                 freq1 = peaks[i][IDX_FREQ_I]
                 freq2 = peaks[i + j][IDX_FREQ_I]
                 t1 = peaks[i][IDX_TIME_J]
                 t2 = peaks[i + j][IDX_TIME_J]
                 t_delta = t2 - t1
 
-                if t_delta >= MIN_HASH_TIME_DELTA and t_delta <= MAX_HASH_TIME_DELTA:
-                    h = hashlib.sha1(
-                        "%s|%s|%s" % (str(freq1), str(freq2), str(t_delta)))
+                if MAX_HASH_TIME_DELTA >= t_delta >= MIN_HASH_TIME_DELTA:
+                    h = hashlib.sha1('{}|{}|{}'.format(freq1, freq2, t_delta))
                     yield (h.hexdigest()[0:FINGERPRINT_REDUCTION], t1)
