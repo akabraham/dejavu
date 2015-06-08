@@ -32,12 +32,14 @@ class Dejavu(object):
         self.limit = self.config.get("fingerprint_limit", None)
         if self.limit == -1:  # for JSON compatibility
             self.limit = None
+
+        self.songs = self.db.get_songs()
+        self.songhashes_set = set()  # to know which ones we've computed before
+
         self.get_fingerprinted_songs()
 
     def get_fingerprinted_songs(self):
         # get songs previously indexed
-        self.songs = self.db.get_songs()
-        self.songhashes_set = set()  # to know which ones we've computed before
         for song in self.songs:
             song_hash = song[Database.FIELD_FILE_SHA1]
             self.songhashes_set.add(song_hash)
@@ -58,7 +60,7 @@ class Dejavu(object):
 
             # don't refingerprint already fingerprinted files
             if decoder.unique_hash(filename) in self.songhashes_set:
-                print "%s already fingerprinted, continuing..." % filename
+                print "{} already fingerprinted, continuing...".format(filename)
                 continue
 
             filenames_to_fingerprint.append(filename)
@@ -99,7 +101,7 @@ class Dejavu(object):
         song_name = song_name or songname
         # don't refingerprint already fingerprinted files
         if song_hash in self.songhashes_set:
-            print "%s already fingerprinted, continuing..." % song_name
+            print "{} already fingerprinted, continuing...".format(song_name)
         else:
             song_name, hashes, file_hash = _fingerprint_worker(
                 filepath,
@@ -112,8 +114,8 @@ class Dejavu(object):
             self.db.set_song_fingerprinted(sid)
             self.get_fingerprinted_songs()
 
-    def find_matches(self, samples, Fs=fingerprint.DEFAULT_FS):
-        hashes = fingerprint.fingerprint(samples, Fs=Fs)
+    def find_matches(self, samples, fs=fingerprint.DEFAULT_FS):
+        hashes = fingerprint.fingerprint(samples, fs=fs)
         return self.db.return_matches(hashes)
 
     def align_matches(self, matches):
@@ -154,12 +156,13 @@ class Dejavu(object):
                          fingerprint.DEFAULT_WINDOW_SIZE *
                          fingerprint.DEFAULT_OVERLAP_RATIO, 5)
         song = {
-            Dejavu.SONG_ID : song_id,
-            Dejavu.SONG_NAME : songname,
-            Dejavu.CONFIDENCE : largest_count,
-            Dejavu.OFFSET : int(largest),
-            Dejavu.OFFSET_SECS : nseconds,
-            Database.FIELD_FILE_SHA1 : song.get(Database.FIELD_FILE_SHA1, None),}
+            Dejavu.SONG_ID: song_id,
+            Dejavu.SONG_NAME: songname,
+            Dejavu.CONFIDENCE: largest_count,
+            Dejavu.OFFSET: int(largest),
+            Dejavu.OFFSET_SECS: nseconds,
+            Database.FIELD_FILE_SHA1: song.get(Database.FIELD_FILE_SHA1, None)
+        }
         return song
 
     def recognize(self, recognizer, *options, **kwoptions):
@@ -177,7 +180,7 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
 
     songname, extension = os.path.splitext(os.path.basename(filename))
     song_name = song_name or songname
-    channels, Fs, file_hash = decoder.read(filename, limit)
+    channels, fs, file_hash = decoder.read(filename, limit)
     result = set()
     channel_amount = len(channels)
 
@@ -186,7 +189,7 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
         print("Fingerprinting channel %d/%d for %s" % (channeln + 1,
                                                        channel_amount,
                                                        filename))
-        hashes = fingerprint.fingerprint(channel, Fs=Fs)
+        hashes = fingerprint.fingerprint(channel, fs=fs)
         print("Finished channel %d/%d for %s" % (channeln + 1, channel_amount,
                                                  filename))
         result |= set(hashes)

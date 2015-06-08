@@ -9,12 +9,12 @@ class BaseRecognizer(object):
 
     def __init__(self, dejavu):
         self.dejavu = dejavu
-        self.Fs = fingerprint.DEFAULT_FS
+        self.fs = fingerprint.DEFAULT_FS
 
     def _recognize(self, *data):
         matches = []
         for d in data:
-            matches.extend(self.dejavu.find_matches(d, Fs=self.Fs))
+            matches.extend(self.dejavu.find_matches(d, fs=self.fs))
         return self.dejavu.align_matches(matches)
 
     def recognize(self):
@@ -26,7 +26,7 @@ class FileRecognizer(BaseRecognizer):
         super(FileRecognizer, self).__init__(dejavu)
 
     def recognize_file(self, filename):
-        frames, self.Fs, file_hash = decoder.read(filename, self.dejavu.limit)
+        frames, self.fs, file_hash = decoder.read(filename, self.dejavu.limit)
 
         t = time.time()
         match = self._recognize(*frames)
@@ -42,10 +42,10 @@ class FileRecognizer(BaseRecognizer):
 
 
 class MicrophoneRecognizer(BaseRecognizer):
-    default_chunksize   = 8192
-    default_format      = pyaudio.paInt16
-    default_channels    = 2
-    default_samplerate  = 44100
+    default_chunksize = 8192
+    default_format = pyaudio.paInt16
+    default_channels = 2
+    default_samplerate = 44100
 
     def __init__(self, dejavu):
         super(MicrophoneRecognizer, self).__init__(dejavu)
@@ -77,7 +77,7 @@ class MicrophoneRecognizer(BaseRecognizer):
             frames_per_buffer=chunksize,
         )
 
-        self.data = [[] for i in range(channels)]
+        self.data = [[] for _ in xrange(channels)]
 
     def process_recording(self):
         data = self.stream.read(self.chunksize)
@@ -101,8 +101,7 @@ class MicrophoneRecognizer(BaseRecognizer):
 
     def recognize(self, seconds=10):
         self.start_recording()
-        for i in range(0, int(self.samplerate / self.chunksize
-                              * seconds)):
+        for i in xrange(0, int(self.samplerate / self.chunksize * seconds)):
             self.process_recording()
         self.stop_recording()
         return self.recognize_recording()

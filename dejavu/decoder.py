@@ -14,7 +14,7 @@ def unique_hash(filepath, blocksize=2**20):
     Works with large files. 
     """
     s = sha1()
-    with open(filepath , "rb") as f:
+    with open(filepath, "rb") as f:
         while True:
             buf = f.read(blocksize)
             if not buf:
@@ -29,7 +29,7 @@ def find_files(path, extensions):
 
     for dirpath, dirnames, files in os.walk(path):
         for extension in extensions:
-            for f in fnmatch.filter(files, "*.%s" % extension):
+            for f in fnmatch.filter(files, "*.{}".format(extension)):
                 p = os.path.join(dirpath, f)
                 yield (p, extension)
 

@@ -31,7 +31,7 @@ def _wav2array(nchannels, sampwidth, data):
     return result
 
 
-def readwav(file):
+def readwav(f):
     """
     Read a WAV file.
 
@@ -59,7 +59,7 @@ def readwav(file):
     In particular, the function does not read compressed WAV files.
 
     """
-    wav = _wave.open(file)
+    wav = _wave.open(f)
     rate = wav.getframerate()
     nchannels = wav.getnchannels()
     sampwidth = wav.getsampwidth()
