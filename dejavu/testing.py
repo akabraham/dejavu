@@ -15,10 +15,9 @@ import logging
 
 def set_seed(seed=None):
     """
-    `seed` as None means that the sampling will be random. 
+    `seed` as None means that the sampling will be random.
 
-    Setting your own seed means that you can produce the 
-    same experiment over and over. 
+    Setting your own seed means that you can produce the same experiment over and over.
     """
     if seed is not None:
         random.seed(seed)
@@ -26,8 +25,8 @@ def set_seed(seed=None):
 
 def get_files_recursive(src, fmt):
     """
-    `src` is the source directory. 
-    `fmt` is the extension, ie ".mp3" or "mp3", etc.
+    `src` is the source directory.
+    `fmt` is the extension, e.g. ".mp3" or "mp3", etc.
     """
     for root, dirnames, filenames in os.walk(src):
         for filename in fnmatch.filter(filenames, '*' + fmt):
@@ -36,8 +35,8 @@ def get_files_recursive(src, fmt):
 
 def get_length_audio(audiopath, extension):
     """
-    Returns length of audio in seconds. 
-    Returns None if format isn't supported or in case of error. 
+    Returns length of audio in seconds.
+    Returns None if format isn't supported or in case of error.
     """
     try:
         audio = AudioSegment.from_file(audiopath, extension.replace(".", ""))
@@ -63,13 +62,12 @@ def get_starttime(length, nseconds, padding):
 def generate_test_files(src, dest, nseconds, fmts=(".mp3", ".wav"), padding=10):
     """
     Generates a test file for each file recursively in `src` directory
-    of given format using `nseconds` sampled from the audio file. 
+    of given format using `nseconds` sampled from the audio file.
 
     Results are written to `dest` directory.
 
-    `padding` is the number of off-limit seconds and the beginning and
-    end of a track that won't be sampled in testing. Often you want to 
-    avoid silence, etc. 
+    `padding` is the number of off-limit seconds and the beginning and end of a track that won't be sampled in testing.
+    Often you want to avoid silence, etc.
     """
     # create directories if necessary
     for directory in [src, dest]:
@@ -81,18 +79,17 @@ def generate_test_files(src, dest, nseconds, fmts=(".mp3", ".wav"), padding=10):
 
     # find files recursively of a given file format
     for fmt in fmts:
-        testsources = get_files_recursive(src, fmt) 
+        testsources = get_files_recursive(src, fmt)
         for audiosource in testsources:
 
             print "audiosource: {}".format(audiosource)
-            
+
             filename, extension = os.path.splitext(os.path.basename(audiosource))
-            length = get_length_audio(audiosource, extension) 
+            length = get_length_audio(audiosource, extension)
             starttime = get_starttime(length, nseconds, padding)
 
             test_file_name = "{}_{}_{}sec.{}".format(os.path.join(dest, filename), starttime,
                                                      nseconds, extension.replace(".", ""))
-            
             subprocess.check_output([
                 "ffmpeg", "-y",
                 "-ss", str(starttime),
@@ -135,9 +132,9 @@ class DejavuTest(object):
         print "test_seconds", self.test_seconds
 
         self.test_files = [
-            f for f in os.listdir(self.test_folder) 
-            if os.path.isfile(os.path.join(self.test_folder, f)) 
-            and re.findall("[0-9]*sec", f)[0] in self.test_seconds]
+            f for f in os.listdir(self.test_folder)
+            if (os.path.isfile(os.path.join(self.test_folder, f)) and re.findall(
+                "[0-9]*sec", f)[0] in self.test_seconds)]
 
         print "test_files", self.test_files
 
@@ -153,7 +150,7 @@ class DejavuTest(object):
 
         self.result_match = zeros_double_array
 
-        print "result_match matrix:", self.result_match 
+        print "result_match matrix:", self.result_match
 
         # variable match precision (if matched in the corrected time)
         self.result_matching_times = zeros_double_array
@@ -173,7 +170,7 @@ class DejavuTest(object):
             if secs == sec:
                 return i
 
-    def get_line_id (self, song):
+    def get_line_id(self, song):
         for i, s in enumerate(self.test_songs):
             if song == s:
                 return i
@@ -220,16 +217,16 @@ class DejavuTest(object):
             log_msg('--------------------------------------------------')
             log_msg('file: {}'.format(f))
 
-            # get column 
+            # get column
             col = self.get_column_id(re.findall("[0-9]*sec", f)[0])
             # format: XXXX_offset_length.mp3
-            song = path_to_songname(f).split("_")[0]  
+            song = path_to_songname(f).split("_")[0]
             line = self.get_line_id(song)
             result = subprocess.check_output([
-                "python", 
+                "python",
                 "dejavu.py",
                 '-r',
-                'file', 
+                'file',
                 self.test_folder + "/" + f])
 
             if result.strip() == "None":
@@ -238,7 +235,6 @@ class DejavuTest(object):
                 self.result_matching_times[line][col] = 0
                 self.result_query_duration[line][col] = 0
                 self.result_match_confidence[line][col] = 0
-            
             else:
                 result = result.strip()
                 result = result.replace(" \'", ' "')
@@ -269,8 +265,8 @@ class DejavuTest(object):
                     song_start_time = re.findall("\_[^\_]+", f)
                     song_start_time = song_start_time[0].lstrip("_ ")
 
-                    result_start_time = round((result[Dejavu.OFFSET] * DEFAULT_WINDOW_SIZE * 
-                                               DEFAULT_OVERLAP_RATIO) / DEFAULT_FS, 0)
+                    result_start_time = round(
+                        (result[Dejavu.OFFSET] * DEFAULT_WINDOW_SIZE * DEFAULT_OVERLAP_RATIO) / DEFAULT_FS, 0)
 
                     self.result_matching_times[line][col] = int(result_start_time) - int(song_start_time)
                     if abs(self.result_matching_times[line][col]) == 1:

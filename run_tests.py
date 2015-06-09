@@ -64,7 +64,7 @@ except:
     # FIXME: too broad of an error
     os.mkdir(options.results_folder)
 
-# set logging 
+# set logging
 if options.log:
     logging.basicConfig(filename=options.log_file, level=logging.DEBUG)
 
@@ -85,7 +85,7 @@ log_msg("finished obtaining results from dejavu in {}".format(time.time() - tm),
         log=options.log, silent=options.silent)
 
 tests = 1  # djv
-n_secs = len(test_seconds) 
+n_secs = len(test_seconds)
 
 # set result variables -> 4d variables
 all_match_counter = [[[0] * tests] * 3] * n_secs
@@ -142,7 +142,7 @@ for sec in xrange(0, n_secs):
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.75, box.height])
     # ax.legend((rects1[0]), ('Dejavu'), loc='center left', bbox_to_anchor=(1, 0.5))
-    autolabeldoubles(rects1,ax)
+    autolabeldoubles(rects1, ax)
     plt.grid()
 
     fig_name = os.path.join(options.results_folder, "matching_perc_{}.png".format(test_seconds[sec]))

@@ -1,10 +1,12 @@
+from __future__ import unicode_literals
 import json
 import warnings
-warnings.filterwarnings("ignore")
 
 from dejavu import Dejavu
 from dejavu.recognize import FileRecognizer, MicrophoneRecognizer
 
+
+warnings.filterwarnings("ignore")
 
 # load config from a JSON file (or anything outputting a python dictionary)
 with open("dejavu.cnf.SAMPLE") as f:
@@ -19,7 +21,7 @@ if __name__ == '__main__':
     djv.fingerprint_directory("mp3", [".mp3"])
 
     # Recognize audio from a file
-    song = djv.recognize(FileRecognizer, "mp3/co_alarm.mp3")
+    song = djv.recognize(FileRecognizer, "mp3/microwave.mp3")
     print "From file we recognized: {}".format(song)
 
     # Or recognize audio from your microphone for `secs` seconds

@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import dejavu.fingerprint as fingerprint
 import dejavu.decoder as decoder
 import numpy as np

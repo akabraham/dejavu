@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import unicode_literals
 import os
 import sys
 import json
@@ -16,7 +17,7 @@ DEFAULT_CONFIG_FILE = "dejavu.cnf.SAMPLE"
 
 
 def init(configpath):
-    """ 
+    """
     Load config from a JSON file
     """
     try:

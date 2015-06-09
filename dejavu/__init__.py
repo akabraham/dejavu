@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 from dejavu.database import get_database, Database
 import dejavu.decoder as decoder
 import fingerprint
@@ -9,7 +10,7 @@ import sys
 
 class Dejavu(object):
 
-    SONG_ID = "song_id"
+    SONG_ID = 'song_id'
     SONG_NAME = 'song_name'
     CONFIDENCE = 'confidence'
     MATCH_TIME = 'match_time'

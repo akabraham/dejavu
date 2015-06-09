@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 import numpy as np
 import matplotlib.mlab as mlab
 import matplotlib.pyplot as plt
@@ -60,6 +61,7 @@ PEAK_SORT = True
 # fingerprint calculation. The more you throw away, the less storage, but
 # potentially higher collisions and misclassifications when identifying songs.
 FINGERPRINT_REDUCTION = 20
+
 
 def fingerprint(channel_samples, fs=DEFAULT_FS,
                 wsize=DEFAULT_WINDOW_SIZE,
