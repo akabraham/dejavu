@@ -130,8 +130,7 @@ class Dejavu(object):
         largest = 0
         largest_count = 0
         song_id = -1
-        for tup in matches:
-            sid, diff = tup
+        for sid, diff in matches:
             if diff not in diff_counter:
                 diff_counter[diff] = {}
             if sid not in diff_counter[diff]:
@@ -143,7 +142,7 @@ class Dejavu(object):
                 largest_count = diff_counter[diff][sid]
                 song_id = sid
 
-        # extract idenfication
+        # extract identification
         song = self.db.get_song_by_id(song_id)
         if song:
             # TODO: Clarify what `get_song_by_id` should return.
@@ -172,7 +171,7 @@ class Dejavu(object):
 
 def _fingerprint_worker(filename, limit=None, song_name=None):
     # Pool.imap sends arguments as tuples so we have to unpack
-    # them ourself.
+    # them ourselves.
     try:
         filename, limit = filename
     except ValueError:
@@ -184,14 +183,11 @@ def _fingerprint_worker(filename, limit=None, song_name=None):
     result = set()
     channel_amount = len(channels)
 
-    for channeln, channel in enumerate(channels):
+    for i, channel in enumerate(channels):
         # TODO: Remove prints or change them into optional logging.
-        print("Fingerprinting channel %d/%d for %s" % (channeln + 1,
-                                                       channel_amount,
-                                                       filename))
+        print "Fingerprinting channel {}/{} for {}".format(i + 1, channel_amount, filename)
         hashes = fingerprint.fingerprint(channel, fs=fs)
-        print("Finished channel %d/%d for %s" % (channeln + 1, channel_amount,
-                                                 filename))
+        print "Finished channel {}/{} for {}".format(i + 1, channel_amount, filename)
         result |= set(hashes)
 
     return song_name, result, file_hash

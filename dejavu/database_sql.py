@@ -8,6 +8,7 @@ from MySQLdb.cursors import DictCursor
 from dejavu.database import Database
 
 
+# FIXME: Replace this all. Tables should not be constructed with string concatenation!
 class SQLDatabase(Database):
     """
     Queries:
@@ -242,7 +243,7 @@ class SQLDatabase(Database):
             cur.execute(self.INSERT_SONG, (songname, file_hash))
             return cur.lastrowid
 
-    def query(self, hash):
+    def query(self, hsh):
         """
         Return all tuples associated with hash.
 
@@ -250,7 +251,7 @@ class SQLDatabase(Database):
         database (be careful with that one!).
         """
         # select all if no key
-        query = self.SELECT_ALL if hash is None else self.SELECT
+        query = self.SELECT_ALL if hsh is None else self.SELECT
 
         with self.cursor() as cur:
             cur.execute(query)
@@ -269,8 +270,8 @@ class SQLDatabase(Database):
         values into the database.
         """
         values = []
-        for hash, offset in hashes:
-            values.append((hash, sid, offset))
+        for hsh, offset in hashes:
+            values.append((hsh, sid, offset))
 
         with self.cursor() as cur:
             for split_values in grouper(values, 1000):
@@ -283,10 +284,10 @@ class SQLDatabase(Database):
         """
         # Create a dictionary of hash => offset pairs for later lookups
         mapper = {}
-        for hash, offset in hashes:
-            mapper[hash.upper()] = offset
+        for hsh, offset in hashes:
+            mapper[hsh.upper()] = offset
 
-        # Get an iteratable of all the hashes we need
+        # Get an iterable of all the hashes we need
         values = mapper.keys()
 
         with self.cursor() as cur:
@@ -297,12 +298,12 @@ class SQLDatabase(Database):
 
                 cur.execute(query, split_values)
 
-                for hash, sid, offset in cur:
+                for hsh, sid, offset in cur:
                     # (sid, db_offset - song_sampled_offset)
-                    yield (sid, offset - mapper[hash])
+                    yield (sid, offset - mapper[hsh])
 
     def __getstate__(self):
-        return (self._options,)
+        return tuple(self._options)
 
     def __setstate__(self, state):
         self._options, = state

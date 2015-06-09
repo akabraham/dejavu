@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, unicode_literals
 from pydub import AudioSegment
 from dejavu.decoder import path_to_songname
 from dejavu import Dejavu
@@ -12,6 +12,7 @@ import subprocess
 import random
 import logging
 
+
 def set_seed(seed=None):
     """
     `seed` as None means that the sampling will be random. 
@@ -22,6 +23,7 @@ def set_seed(seed=None):
     if seed is not None:
         random.seed(seed)
 
+
 def get_files_recursive(src, fmt):
     """
     `src` is the source directory. 
@@ -31,6 +33,7 @@ def get_files_recursive(src, fmt):
         for filename in fnmatch.filter(filenames, '*' + fmt):
             yield os.path.join(root, filename)
 
+
 def get_length_audio(audiopath, extension):
     """
     Returns length of audio in seconds. 
@@ -39,9 +42,11 @@ def get_length_audio(audiopath, extension):
     try:
         audio = AudioSegment.from_file(audiopath, extension.replace(".", ""))
     except:
-        print "Error in get_length_audio(): %s" % traceback.format_exc()
+        # FIXME: too broad of an error
+        print "Error in get_length_audio(): {}".format(traceback.format_exc())
         return None
     return int(len(audio) / 1000.0)
+
 
 def get_starttime(length, nseconds, padding):
     """
@@ -54,7 +59,8 @@ def get_starttime(length, nseconds, padding):
         return 0
     return random.randint(padding, maximum)
 
-def generate_test_files(src, dest, nseconds, fmts=[".mp3", ".wav"], padding=10):
+
+def generate_test_files(src, dest, nseconds, fmts=(".mp3", ".wav"), padding=10):
     """
     Generates a test file for each file recursively in `src` directory
     of given format using `nseconds` sampled from the audio file. 
@@ -70,6 +76,7 @@ def generate_test_files(src, dest, nseconds, fmts=[".mp3", ".wav"], padding=10):
         try:
             os.stat(directory)
         except:
+            # FIXME: too broad of an error
             os.mkdir(directory)
 
     # find files recursively of a given file format
@@ -77,22 +84,22 @@ def generate_test_files(src, dest, nseconds, fmts=[".mp3", ".wav"], padding=10):
         testsources = get_files_recursive(src, fmt) 
         for audiosource in testsources:
 
-            print "audiosource:", audiosource
+            print "audiosource: {}".format(audiosource)
             
             filename, extension = os.path.splitext(os.path.basename(audiosource))
             length = get_length_audio(audiosource, extension) 
             starttime = get_starttime(length, nseconds, padding)
 
-            test_file_name = "%s_%s_%ssec.%s" % (
-                os.path.join(dest, filename), starttime, 
-                nseconds, extension.replace(".", ""))
+            test_file_name = "{}_{}_{}sec.{}".format(os.path.join(dest, filename), starttime,
+                                                     nseconds, extension.replace(".", ""))
             
             subprocess.check_output([
                 "ffmpeg", "-y",
-                "-ss", "%d" % starttime, 
-                '-t' , "%d" % nseconds, 
+                "-ss", str(starttime),
+                '-t', str(nseconds),
                 "-i", audiosource,
                 test_file_name])
+
 
 def log_msg(msg, log=True, silent=False):
     if log:
@@ -100,19 +107,22 @@ def log_msg(msg, log=True, silent=False):
     if not silent:
         print msg
 
+
 def autolabel(rects, ax):
     # attach some text labels
     for rect in rects:
         height = rect.get_height()
-        ax.text(rect.get_x() + rect.get_width() / 2., 1.05 * height, 
-            '%d' % int(height), ha='center', va='bottom')
+        ax.text(rect.get_x() + rect.get_width() / 2, 1.05 * height,
+                str(int(height)), ha='center', va='bottom')
+
 
 def autolabeldoubles(rects, ax):
     # attach some text labels
     for rect in rects:
         height = rect.get_height()
-        ax.text(rect.get_x() + rect.get_width() / 2., 1.05 * height, 
-            '%s' % round(float(height), 3), ha='center', va='bottom')
+        ax.text(rect.get_x() + rect.get_width() / 2, 1.05 * height,
+                str(round(float(height), 3)), ha='center', va='bottom')
+
 
 class DejavuTest(object):
     def __init__(self, folder, seconds):
@@ -139,22 +149,26 @@ class DejavuTest(object):
         print "lines:", self.n_lines
 
         # variable match results (yes, no, invalid)
-        self.result_match = [[0 for x in xrange(self.n_columns)] for x in xrange(self.n_lines)] 
+        zeros_double_array = [[0 * self.n_columns] * self.n_lines]
+
+        self.result_match = zeros_double_array
 
         print "result_match matrix:", self.result_match 
 
         # variable match precision (if matched in the corrected time)
-        self.result_matching_times = [[0 for x in xrange(self.n_columns)] for x in xrange(self.n_lines)] 
+        self.result_matching_times = zeros_double_array
 
-        # variable mahing time (query time) 
-        self.result_query_duration = [[0 for x in xrange(self.n_columns)] for x in xrange(self.n_lines)] 
+        self.result_query_duration = zeros_double_array
+
+        # variable matching time (query time)
+        self.result_query_duration = zeros_double_array
 
         # variable confidence
-        self.result_match_confidence = [[0 for x in xrange(self.n_columns)] for x in xrange(self.n_lines)] 
+        self.result_match_confidence = zeros_double_array
 
         self.begin()
 
-    def get_column_id (self, secs):
+    def get_column_id(self, secs):
         for i, sec in enumerate(self.test_seconds):
             if secs == sec:
                 return i
@@ -167,9 +181,9 @@ class DejavuTest(object):
         return len(self.test_songs) - 1
 
     def create_plots(self, name, results, results_folder):
-        for sec in range(0, len(self.test_seconds)):
-            ind = np.arange(self.n_lines) #
-            width = 0.25       # the width of the bars
+        for sec in xrange(0, len(self.test_seconds)):
+            ind = np.arange(self.n_lines)
+            width = 0.25  # the width of the bars
 
             fig = plt.figure()
             ax = fig.add_subplot(111)
@@ -180,18 +194,16 @@ class DejavuTest(object):
 
             # add some
             ax.set_ylabel(name)
-            ax.set_title("%s %s Results" % (self.test_seconds[sec], name)) 
+            ax.set_title("{} {} Results".format(self.test_seconds[sec], name))
             ax.set_xticks(ind + width)
 
-            labels = [0 for x in range(0, self.n_lines)]
-            for x in range(0, self.n_lines):
-                labels[x] = "song %s" % (x+1)
+            labels = ['song {}'.format(x + 1) for x in xrange(0, self.n_lines)]
             ax.set_xticklabels(labels)
 
             box = ax.get_position()
             ax.set_position([box.x0, box.y0, box.width * 0.75, box.height])
 
-            #ax.legend( (rects1[0]), ('Dejavu'), loc='center left', bbox_to_anchor=(1, 0.5))
+            # ax.legend((rects1[0]), ('Dejavu'), loc='center left', bbox_to_anchor=(1, 0.5))
 
             if name == 'Confidence':
                 autolabel(rects1, ax)
@@ -200,13 +212,13 @@ class DejavuTest(object):
 
             plt.grid()
 
-            fig_name = os.path.join(results_folder, "%s_%s.png" % (name, self.test_seconds[sec]))
+            fig_name = os.path.join(results_folder, "{}_{}.png".format(name, self.test_seconds[sec]))
             fig.savefig(fig_name)
 
     def begin(self):
         for f in self.test_files:
             log_msg('--------------------------------------------------')
-            log_msg('file: %s' % f)
+            log_msg('file: {}'.format(f))
 
             # get column 
             col = self.get_column_id(re.findall("[0-9]*sec", f)[0])
@@ -237,8 +249,8 @@ class DejavuTest(object):
                 # which song did we predict?
                 result = ast.literal_eval(result)
                 song_result = result["song_name"]
-                log_msg('song: %s' % song)
-                log_msg('song_result: %s' % song_result)
+                log_msg('song: {}'.format(song))
+                log_msg('song_result: {}'.format(song_result))
 
                 if song_result != song:
                     log_msg('invalid match')
@@ -250,29 +262,26 @@ class DejavuTest(object):
                     log_msg('correct match')
                     print self.result_match
                     self.result_match[line][col] = 'yes'
-                    self.result_query_duration[line][col] = round(result[Dejavu.MATCH_TIME],3)
+                    self.result_query_duration[line][col] = round(result[Dejavu.MATCH_TIME], 3)
                     self.result_match_confidence[line][col] = result[Dejavu.CONFIDENCE]
 
-                    song_start_time = re.findall("\_[^\_]+",f)
+                    # FIXME: not most efficient regular expression
+                    song_start_time = re.findall("\_[^\_]+", f)
                     song_start_time = song_start_time[0].lstrip("_ ")
 
                     result_start_time = round((result[Dejavu.OFFSET] * DEFAULT_WINDOW_SIZE * 
-                        DEFAULT_OVERLAP_RATIO) / (DEFAULT_FS), 0)
+                                               DEFAULT_OVERLAP_RATIO) / DEFAULT_FS, 0)
 
                     self.result_matching_times[line][col] = int(result_start_time) - int(song_start_time)
-                    if (abs(self.result_matching_times[line][col]) == 1):
+                    if abs(self.result_matching_times[line][col]) == 1:
                         self.result_matching_times[line][col] = 0
 
-                    log_msg('query duration: %s' % round(result[Dejavu.MATCH_TIME],3))
-                    log_msg('confidence: %s' % result[Dejavu.CONFIDENCE])
-                    log_msg('song start_time: %s' % song_start_time)
-                    log_msg('result start time: %s' % result_start_time)
-                    if (self.result_matching_times[line][col] == 0):
+                    log_msg('query duration: {}'.format(round(result[Dejavu.MATCH_TIME], 3)))
+                    log_msg('confidence: {}'.format(result[Dejavu.CONFIDENCE]))
+                    log_msg('song start_time: {}'.format(song_start_time))
+                    log_msg('result start time: {}'.format(result_start_time))
+                    if self.result_matching_times[line][col] == 0:
                         log_msg('accurate match')
                     else:
                         log_msg('inaccurate match')
             log_msg('--------------------------------------------------\n')
-
-
-
-

@@ -1,5 +1,6 @@
+from __future__ import unicode_literals
 from dejavu.testing import *
-from dejavu import Dejavu
+
 from optparse import OptionParser
 import matplotlib.pyplot as plt
 import time
@@ -59,6 +60,7 @@ set_seed(options.seed)
 try:
     os.stat(options.results_folder)
 except:
+    # FIXME: too broad of an error
     os.mkdir(options.results_folder)
 
 # set logging 
@@ -66,119 +68,118 @@ if options.log:
     logging.basicConfig(filename=options.log_file, level=logging.DEBUG)
 
 # set test seconds
-test_seconds = ['%dsec' % i for i in range(1, options.secs + 1, 1)]
+test_seconds = ['{}sec'.format(i) for i in xrange(1, options.secs + 1)]
 
 # generate testing files
-for i in range(1, options.secs + 1, 1):
-    generate_test_files(test_folder, options.temp_folder, 
-                        i, padding=options.padding)
+for i in xrange(1, options.secs + 1):
+    generate_test_files(test_folder, options.temp_folder, i, padding=options.padding)
 
 # scan files
-log_msg("Running Dejavu fingerprinter on files in %s..." % test_folder, 
+log_msg("Running Dejavu fingerprinter on files in {}...".format(test_folder),
         log=options.log, silent=options.silent)
 
 tm = time.time()
 djv = DejavuTest(options.temp_folder, test_seconds)
-log_msg("finished obtaining results from dejavu in %s" % (time.time() - tm),
+log_msg("finished obtaining results from dejavu in {}".format(time.time() - tm),
         log=options.log, silent=options.silent)
 
 tests = 1  # djv
 n_secs = len(test_seconds) 
 
 # set result variables -> 4d variables
-all_match_counter = [[[0 for x in xrange(tests)] for x in xrange(3)] for x in xrange(n_secs)]
-all_matching_times_counter = [[[0 for x in xrange(tests)] for x in xrange(2)] for x in xrange(n_secs)]
-all_query_duration = [[[0 for x in xrange(tests)] for x in xrange(djv.n_lines)] for x in xrange(n_secs)]
-all_match_confidence = [[[0 for x in xrange(tests)] for x in xrange(djv.n_lines)] for x in xrange(n_secs)]
+all_match_counter = [[[0] * tests] * 3] * n_secs
+all_matching_times_counter = [[[0] * tests] * 2] * n_secs
+all_query_duration = [[[0] * tests] * djv.n_lines] * n_secs
+all_match_confidence = all_query_duration
 
 # group results by seconds
-for line in range(0, djv.n_lines):
-	for col in range(0, djv.n_columns):
-		# for dejavu
-		all_query_duration[col][line][0] = djv.result_query_duration[line][col]
-		all_match_confidence[col][line][0] = djv.result_match_confidence[line][col]
+for line in xrange(0, djv.n_lines):
+    for col in xrange(0, djv.n_columns):
+        # for dejavu
+        all_query_duration[col][line][0] = djv.result_query_duration[line][col]
+        all_match_confidence[col][line][0] = djv.result_match_confidence[line][col]
 
-		djv_match_result = djv.result_match[line][col]
+        djv_match_result = djv.result_match[line][col]
 
-		if djv_match_result == 'yes':
-			all_match_counter[col][0][0] += 1
-		elif djv_match_result == 'no':
-			all_match_counter[col][1][0] += 1
-		else:
-			all_match_counter[col][2][0] += 1
+        if djv_match_result == 'yes':
+            all_match_counter[col][0][0] += 1
+        elif djv_match_result == 'no':
+            all_match_counter[col][1][0] += 1
+        else:
+            all_match_counter[col][2][0] += 1
 
-		djv_match_acc = djv.result_matching_times[line][col]
+        djv_match_acc = djv.result_matching_times[line][col]
 
-		if djv_match_acc == 0 and djv_match_result == 'yes':
-			all_matching_times_counter[col][0][0] += 1
-		elif djv_match_acc != 0:
-			all_matching_times_counter[col][1][0] += 1
+        if djv_match_acc == 0 and djv_match_result == 'yes':
+            all_matching_times_counter[col][0][0] += 1
+        elif djv_match_acc != 0:
+            all_matching_times_counter[col][1][0] += 1
 
 # create plots
 djv.create_plots('Confidence', all_match_confidence, options.results_folder)
 djv.create_plots('Query duration', all_query_duration, options.results_folder)
 
-for sec in range(0, n_secs):
-	ind = np.arange(3) #
-	width = 0.25       # the width of the bars
+for sec in xrange(0, n_secs):
+    ind = np.arange(3)
+    width = 0.25  # the width of the bars
 
-	fig = plt.figure()
-	ax = fig.add_subplot(111)
-	ax.set_xlim([-1 * width, 2.75])
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlim([-1 * width, 2.75])
 
-	means_dvj = [round(x[0] * 100 / djv.n_lines, 1) for x in all_match_counter[sec]]
-	rects1 = ax.bar(ind, means_dvj, width, color='r')
+    means_dvj = [round(x[0] * 100 / djv.n_lines, 1) for x in all_match_counter[sec]]
+    rects1 = ax.bar(ind, means_dvj, width, color='r')
 
-	# add some
-	ax.set_ylabel('Matching Percentage')
-	ax.set_title('%s Matching Percentage' % test_seconds[sec])
-	ax.set_xticks(ind + width)
+    # add some
+    ax.set_ylabel('Matching Percentage')
+    ax.set_title('{} Matching Percentage'.format(test_seconds[sec]))
+    ax.set_xticks(ind + width)
 
-	labels = ['yes','no','invalid']
-	ax.set_xticklabels( labels )
+    labels = ['yes', 'no', 'invalid']
+    ax.set_xticklabels(labels)
 
-	box = ax.get_position()
-	ax.set_position([box.x0, box.y0, box.width * 0.75, box.height])
-	#ax.legend((rects1[0]), ('Dejavu'), loc='center left', bbox_to_anchor=(1, 0.5))
-	autolabeldoubles(rects1,ax)
-	plt.grid()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.75, box.height])
+    # ax.legend((rects1[0]), ('Dejavu'), loc='center left', bbox_to_anchor=(1, 0.5))
+    autolabeldoubles(rects1,ax)
+    plt.grid()
 
- 	fig_name = os.path.join(options.results_folder, "matching_perc_%s.png" % test_seconds[sec])
- 	fig.savefig(fig_name)
+    fig_name = os.path.join(options.results_folder, "matching_perc_{}.png".format(test_seconds[sec]))
+    fig.savefig(fig_name)
 
-for sec in range(0, n_secs):
-	ind = np.arange(2) #
-	width = 0.25       # the width of the bars
+for sec in xrange(0, n_secs):
+    ind = np.arange(2)
+    width = 0.25  # the width of the bars
 
-	fig = plt.figure()
-	ax = fig.add_subplot(111)
-	ax.set_xlim([-1*width, 1.75])
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlim([-1 * width, 1.75])
 
-	div = all_match_counter[sec][0][0]
-	if div == 0 :
-		div = 1000000
+    div = all_match_counter[sec][0][0]
+    if div == 0:
+        div = 1000000
 
-	means_dvj = [round(x[0] * 100 / div, 1) for x in all_matching_times_counter[sec]]
-	rects1 = ax.bar(ind, means_dvj, width, color='r')
+    means_dvj = [round(x[0] * 100 / div, 1) for x in all_matching_times_counter[sec]]
+    rects1 = ax.bar(ind, means_dvj, width, color='r')
 
-	# add some
-	ax.set_ylabel('Matching Accuracy')
-	ax.set_title('%s Matching Times Accuracy' % test_seconds[sec])
-	ax.set_xticks(ind + width)
+    # add some
+    ax.set_ylabel('Matching Accuracy')
+    ax.set_title('{} Matching Times Accuracy'.format(test_seconds[sec]))
+    ax.set_xticks(ind + width)
 
-	labels = ['yes','no']
-	ax.set_xticklabels( labels )
+    labels = ['yes', 'no']
+    ax.set_xticklabels(labels)
 
-	box = ax.get_position()
-	ax.set_position([box.x0, box.y0, box.width * 0.75, box.height])
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0, box.width * 0.75, box.height])
 
-	#ax.legend( (rects1[0]), ('Dejavu'), loc='center left', bbox_to_anchor=(1, 0.5))
-	autolabeldoubles(rects1,ax)
+    # ax.legend((rects1[0]), ('Dejavu'), loc='center left', bbox_to_anchor=(1, 0.5))
+    autolabeldoubles(rects1, ax)
 
-	plt.grid()
+    plt.grid()
 
- 	fig_name = os.path.join(options.results_folder, "matching_acc_%s.png" % test_seconds[sec])
- 	fig.savefig(fig_name)
+    fig_name = os.path.join(options.results_folder, "matching_acc_{}.png".format(test_seconds[sec]))
+    fig.savefig(fig_name)
 
 # remove temporary folder
 shutil.rmtree(options.temp_folder)

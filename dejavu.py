@@ -23,8 +23,8 @@ def init(configpath):
     try:
         with open(configpath) as f:
             config = json.load(f)
-    except IOError as err:
-        print("Cannot open configuration: %s. Exiting" % (str(err)))
+    except IOError as e:
+        print "Cannot open configuration: {}. Exiting".format(e)
         sys.exit(1)
 
     # create a Dejavu instance
@@ -59,7 +59,7 @@ if __name__ == '__main__':
     config_file = args.config
     if config_file is None:
         config_file = DEFAULT_CONFIG_FILE
-        # print "Using default config file: %s" % (config_file)
+        # print "Using default config file: {}".format(config_file)
 
     djv = init(config_file)
     if args.fingerprint:
@@ -67,14 +67,13 @@ if __name__ == '__main__':
         if len(args.fingerprint) == 2:
             directory = args.fingerprint[0]
             extension = args.fingerprint[1]
-            print("Fingerprinting all .%s files in the %s directory"
-                  % (extension, directory))
+            print "Fingerprinting all .{} files in the {} directory".format(extension, directory)
             djv.fingerprint_directory(directory, ["." + extension], 4)
 
         elif len(args.fingerprint) == 1:
             filepath = args.fingerprint[0]
             if os.path.isdir(filepath):
-                print("Please specify an extension if you'd like to fingerprint a directory!")
+                print "Please specify an extension if you'd like to fingerprint a directory!"
                 sys.exit(1)
             djv.fingerprint_file(filepath)
 
