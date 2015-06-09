@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import os
 import sys
@@ -7,8 +7,7 @@ import warnings
 import argparse
 
 from dejavu import Dejavu
-from dejavu.recognize import FileRecognizer
-from dejavu.recognize import MicrophoneRecognizer
+from dejavu.recognize import FileRecognizer, MicrophoneRecognizer
 from argparse import RawTextHelpFormatter
 
 warnings.filterwarnings("ignore")

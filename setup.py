@@ -6,6 +6,7 @@ def parse_requirements(requirements):
     with open(requirements) as f:
         return [l.strip() for l in f if not l.startswith('#')]
 
+
 PACKAGE_NAME = "PyDejavu"
 PACKAGE_VERSION = "0.1.3"
 SUMMARY = 'Dejavu: Audio Fingerprinting in Python'

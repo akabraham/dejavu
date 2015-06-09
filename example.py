@@ -1,5 +1,5 @@
-import warnings
 import json
+import warnings
 warnings.filterwarnings("ignore")
 
 from dejavu import Dejavu
